@@ -1,7 +1,9 @@
 # ESG Climate Portfolio
 
 **Does ESG screening reduce portfolio tail risk?**
-A quantitative analysis of 139 S&P 500 constituents across five ESG quintiles, covering 2020–2024.
+A quantitative analysis of 129 S&P 500 constituents across five ESG quintiles, covering 2021–2026.
+
+![Dashboard Preview](dashboard.png)
 
 ---
 
@@ -9,7 +11,7 @@ A quantitative analysis of 139 S&P 500 constituents across five ESG quintiles, c
 
 This project builds a data pipeline that pulls live stock price data from Yahoo Finance, computes a full suite of risk and performance metrics, and exports everything as a self-contained interactive HTML dashboard — no server required.
 
-The central research question is whether companies with higher ESG (Environmental, Social, and Governance) scores exhibit lower tail risk than low-scoring peers. Stocks are divided into five equal quintiles by ESG score (Q1 = highest, Q5 = lowest), each treated as an equal-weighted portfolio, and compared across a range of risk metrics including max drawdown, Value at Risk (VaR), Conditional VaR (CVaR), beta, and return skewness.
+The central research question is whether companies with higher ESG (Environmental, Social, and Governance) scores exhibit lower tail risk than low-scoring peers. Stocks are divided into five equal quintiles by ESG score (Q1 = highest, Q5 = lowest), each treated as an equal-weighted portfolio, and compared across a range of risk metrics including max drawdown, Value at Risk (VaR), Conditional VaR (CVaR), beta, return skewness, and excess kurtosis.
 
 ---
 
@@ -17,10 +19,13 @@ The central research question is whether companies with higher ESG (Environmenta
 
 ```
 esg_portfolio/
-├── universe.py       # 139-stock universe with ESG scores, sectors, carbon intensity
-├── pipeline.py       # Full analytics engine: returns, risk metrics, CAPM, rolling stats
-├── export_html.py    # Generates esg_portfolio.html — run this to produce the dashboard
-└── esg_portfolio.html  # Output: self-contained interactive dashboard (open in any browser)
+├── universe.py            # 129-stock universe with ESG scores, sectors, carbon intensity
+├── pipeline.py            # Full analytics engine: returns, risk metrics, CAPM, rolling stats
+├── export_html.py         # Generates esg_portfolio.html — run this to produce the dashboard
+├── esg_portfolio.html     # Output: self-contained interactive dashboard (open in any browser)
+├── README.md              # This file
+├── FINDINGS.md            # Full findings report with tables and interpretation
+└── ESG_Literature_Review.pdf  # Summary of the 7 key research papers underpinning the project
 ```
 
 ---
@@ -47,12 +52,12 @@ Double-click `esg_portfolio.html`, or drag it into Chrome, Edge, or Firefox. No 
 
 | Tab | What it shows |
 |---|---|
-| **📈 Overview** | Cumulative return curves for all 5 quintiles vs S&P 500, plus the full metrics table |
-| **📉 Tail Risk** | Drawdown series, VaR/CVaR bars, volatility, skewness and kurtosis by quintile |
-| **🔄 Rolling Risk** | 63-day rolling beta, Sharpe ratio, and volatility — selectable per quintile |
-| **📐 Factor Model** | CAPM regression scatter + alpha, beta, R², p-value table for all quintiles |
-| **🔗 Correlations** | Cross-quintile correlation heatmap + ESG score vs risk scatter (all 139 stocks) |
-| **🔍 Stock Screener** | Full sortable, searchable table of all stocks with live metrics |
+| **Overview** | Cumulative return curves for all 5 quintiles vs S&P 500, plus the full metrics table |
+| **Tail Risk** | Drawdown series, VaR/CVaR, volatility, skewness and kurtosis by quintile |
+| **Rolling Risk** | 63-day rolling beta, Sharpe ratio, and volatility — selectable per quintile |
+| **Factor Model** | CAPM regression scatter + alpha, beta, R², p-value table for all quintiles |
+| **Correlations** | Cross-quintile correlation heatmap + ESG score vs risk scatter (all 129 stocks) |
+| **Stock Screener** | Full sortable, searchable table of all stocks with live metrics |
 
 ---
 
@@ -66,8 +71,6 @@ Double-click `esg_portfolio.html`, or drag it into Chrome, Edge, or Firefox. No 
 - Annualised volatility
 - Beta (vs S&P 500)
 - Jensen's alpha (annualised)
-- Tracking error
-- Information ratio
 
 **Tail risk**
 - Maximum drawdown
@@ -91,7 +94,6 @@ Double-click `esg_portfolio.html`, or drag it into Chrome, Edge, or Firefox. No 
 - Rolling volatility
 
 **ESG**
-- Weighted average ESG score per quintile
 - Carbon intensity (tCO₂e / $M revenue)
 - MSCI-style letter grade (AAA → CCC)
 
@@ -99,21 +101,21 @@ Double-click `esg_portfolio.html`, or drag it into Chrome, Edge, or Firefox. No 
 
 ## Stock Universe
 
-139 stocks drawn from the S&P 500 across 11 sectors:
+129 stocks drawn from the S&P 500 across 11 sectors:
 
 - Technology, Healthcare, Financials, Consumer Discretionary
 - Consumer Staples, Industrials, Utilities, Energy
 - Real Estate, Materials, Communication Services
 
-ESG scores range from 14 (tobacco / defence) to 93 (Microsoft, Ørsted equivalents), providing a wide spread across quintiles. Three European tickers (IBE, ENEL, ORSTED) may fail to download via Yahoo Finance — the pipeline handles this gracefully by rebalancing quintiles on the remaining stocks.
+ESG scores range from 14 (tobacco / defence) to 93 (Microsoft equivalent), providing a wide spread across quintiles. Three European tickers (IBE, ENEL, ORSTED) may fail to download via Yahoo Finance — the pipeline handles this gracefully by rebalancing quintiles on the remaining stocks.
 
-To replace them with exchange-specific tickers that Yahoo Finance carries:
+To replace them with exchange-specific tickers that Yahoo Finance carries reliably:
 
-| Replace | With |
-|---|---|
-| `IBE` | `IBE.MC` (Iberdrola, Madrid) |
-| `ENEL` | `ENEL.MI` (Enel, Milan) |
-| `ORSTED` | `ORSTED.CO` (Ørsted, Copenhagen) |
+| Replace | With | Exchange |
+|---|---|---|
+| `IBE` | `IBE.MC` | Iberdrola, Madrid |
+| `ENEL` | `ENEL.MI` | Enel, Milan |
+| `ORSTED` | `ORSTED.CO` | Ørsted, Copenhagen |
 
 ---
 
@@ -133,9 +135,9 @@ To replace them with exchange-specific tickers that Yahoo Finance carries:
 ## How the Pipeline Works
 
 ```
-universe.py          →  139 stocks with ESG metadata
+universe.py          →  129 stocks with ESG metadata
       ↓
-fetch_live_prices()  →  Yahoo Finance download (2020–2024)
+fetch_live_prices()  →  Yahoo Finance download (Nov 2021 – Jun 2026)
       ↓
 compute_returns()    →  Daily + monthly returns
       ↓
@@ -154,7 +156,8 @@ export_html.py       →  All figures rendered via Plotly
 ## Notes
 
 - All prices are adjusted close prices (splits and dividends accounted for)
-- Risk-free rate: 5% annually (approximate US 3-month T-bill, 2020–2024 average)
+- Risk-free rate: 5% annually (approximate US 3-month T-bill average over the period)
 - VaR and CVaR use historical simulation, not parametric estimation
 - Quintiles are re-assigned after any failed downloads to keep each group balanced
 - The HTML file is fully standalone — share it as a single file with no dependencies
+- Data period: November 2021 – June 2026 (1,141 trading days)
